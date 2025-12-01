@@ -14,6 +14,7 @@ import Profile from './pages/users/Profile';
 import ProjectCreate from './pages/projects/ProjectCreate';
 import ProjectDetail from './pages/projects/ProjectDetail';
 import ConferenceCreate from './pages/conferences/ConferenceCreate';
+import ConferenceEdit from './pages/conferences/ConferenceEdit';
 import ConferenceDetail from './pages/conferences/ConferenceDetail';
 import PublicationCreate from './pages/publications/PublicationCreate';
 import PublicationDetail from './pages/publications/PublicationDetail';
@@ -53,6 +54,7 @@ function App() {
             <Route path="projects/:id" element={<ProjectDetail />} />
             <Route path="conferences" element={<Conferences />} />
             <Route path="conferences/create" element={<ConferenceCreate />} />
+            <Route path="conferences/:id/edit" element={<ConferenceEdit />} />
             <Route path="conferences/:id" element={<ConferenceDetail />} />
             <Route path="publications" element={<Publications />} />
             <Route path="publications/create" element={<PublicationCreate />} />

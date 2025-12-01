@@ -1,15 +1,18 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Plus, Trash2, Save, ArrowLeft, Upload, X, FileText, AlertCircle, Send } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
+import { Plus, Trash2, Save, ArrowLeft, Upload, X, FileText, AlertCircle } from 'lucide-react';
 import Input from '../../components/common/Input';
 import Button from '../../components/common/Button';
 import { conferenceService } from '../../services/conferenceService';
 import { useAuth } from '../../context/AuthContext';
-import EmailNotification from '../../components/common/EmailNotification';
 
-const ConferenceCreate = () => {
+const ConferenceEdit = () => {
+    const { id } = useParams();
     const navigate = useNavigate();
     const { user } = useAuth();
+    const [loading, setLoading] = useState(true);
+    const [saving, setSaving] = useState(false);
+    const [errors, setErrors] = useState({});
 
     const [formData, setFormData] = useState({
         title: '',
@@ -17,23 +20,47 @@ const ConferenceCreate = () => {
         startDate: '',
         endDate: '',
         location: '',
-        organizer: user?.department || '',
+        organizer: '',
         budget: '',
         participants: '',
         objectives: '',
         agenda: '',
-        guests: [{ name: '', affiliation: '', role: 'Diễn giả' }],
+        guests: [],
         attachments: [],
-        organizingTeam: [{ name: user?.fullName || '', role: 'Trưởng ban' }],
-        tasks: []
+        organizingTeam: []
     });
 
-    const [loading, setLoading] = useState(false);
-    const [errors, setErrors] = useState({});
-    const [showEmailModal, setShowEmailModal] = useState(false);
-    const [submitType, setSubmitType] = useState('draft'); // 'draft' or 'submit'
+    useEffect(() => {
+        const loadConference = async () => {
+            try {
+                const data = await conferenceService.getById(id);
+                setFormData({
+                    title: data.title || '',
+                    type: data.type || 'Trong nước',
+                    startDate: data.startDate || '',
+                    endDate: data.endDate || '',
+                    location: data.location || '',
+                    organizer: data.organizer || '',
+                    budget: data.budget || '',
+                    participants: data.participants || '',
+                    objectives: data.objectives || '',
+                    agenda: data.agenda || '',
+                    guests: data.guests || [],
+                    attachments: data.attachments || [],
+                    organizingTeam: data.organizingTeam || []
+                });
+            } catch (error) {
+                console.error("Error loading conference:", error);
+                alert('Không tìm thấy hội thảo!');
+                navigate('/conferences');
+            } finally {
+                setLoading(false);
+            }
+        };
 
-    // Validation
+        loadConference();
+    }, [id, navigate]);
+
     const validateForm = () => {
         const newErrors = {};
 
@@ -51,7 +78,6 @@ const ConferenceCreate = () => {
         return Object.keys(newErrors).length === 0;
     };
 
-    // Guest management
     const addGuest = () => {
         setFormData({
             ...formData,
@@ -74,7 +100,6 @@ const ConferenceCreate = () => {
         setFormData({ ...formData, guests: newGuests });
     };
 
-    // Organizing team management
     const addTeamMember = () => {
         setFormData({
             ...formData,
@@ -97,7 +122,6 @@ const ConferenceCreate = () => {
         setFormData({ ...formData, organizingTeam: newTeam });
     };
 
-    // File upload simulation
     const handleFileUpload = (e) => {
         const files = Array.from(e.target.files);
         const newAttachments = files.map(file => ({
@@ -118,46 +142,36 @@ const ConferenceCreate = () => {
         setFormData({ ...formData, attachments: newAttachments });
     };
 
-    const handleSubmit = async (e, type = 'draft') => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
 
-        if (type === 'submit' && !validateForm()) {
+        if (!validateForm()) {
             alert('Vui lòng điền đầy đủ thông tin bắt buộc!');
             return;
         }
 
-        setLoading(true);
-        setSubmitType(type);
+        setSaving(true);
 
         try {
-            await conferenceService.create({
+            await conferenceService.update(id, {
                 ...formData,
                 participants: parseInt(formData.participants) || 0,
-                budget: parseFloat(formData.budget) || 0,
-                status: type === 'submit' ? 'Chờ duyệt' : 'Nháp',
-                statusColor: type === 'submit' ? 'bg-yellow-100 text-yellow-800' : 'bg-gray-100 text-gray-800',
-                submittedBy: user?.fullName,
-                submittedDate: new Date().toISOString()
+                budget: parseFloat(formData.budget) || 0
             });
 
-            if (type === 'submit') {
-                // Show email notification modal
-                setShowEmailModal(true);
-                setTimeout(() => {
-                    setShowEmailModal(false);
-                    navigate('/conferences');
-                }, 3000);
-            } else {
-                alert('Lưu nháp thành công!');
-                navigate('/conferences');
-            }
+            alert('Cập nhật hội thảo thành công!');
+            navigate(`/conferences/${id}`);
         } catch (error) {
-            console.error("Error creating conference:", error);
+            console.error("Error updating conference:", error);
             alert('Đã xảy ra lỗi. Vui lòng thử lại.');
         } finally {
-            setLoading(false);
+            setSaving(false);
         }
     };
+
+    if (loading) {
+        return <div className="p-6 text-center text-gray-500">Đang tải thông tin...</div>;
+    }
 
     return (
         <div className="max-w-4xl mx-auto p-6">
@@ -165,20 +179,20 @@ const ConferenceCreate = () => {
             <div className="flex items-center justify-between mb-8">
                 <div className="flex items-center gap-4">
                     <button
-                        onClick={() => navigate('/conferences')}
+                        onClick={() => navigate(`/conferences/${id}`)}
                         className="p-2 rounded-full hover:bg-gray-100 transition-colors"
                     >
                         <ArrowLeft className="w-6 h-6 text-gray-600" />
                     </button>
                     <div>
-                        <h1 className="text-2xl font-bold text-gray-900">Đề xuất Hội thảo Mới</h1>
-                        <p className="text-gray-500">Điền đầy đủ thông tin để gửi đề xuất tổ chức hội thảo (BR1, UC01)</p>
+                        <h1 className="text-2xl font-bold text-gray-900">Chỉnh sửa Hội thảo</h1>
+                        <p className="text-gray-500">FR01 - Cập nhật thông tin đề xuất</p>
                     </div>
                 </div>
             </div>
 
-            <form className="space-y-6">
-                {/* BR1: Thông tin chung */}
+            <form onSubmit={handleSubmit} className="space-y-6">
+                {/* Thông tin chung */}
                 <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
                     <h2 className="text-lg font-bold text-gray-900 mb-4 border-b pb-2 flex items-center gap-2">
                         <span className="bg-primary text-white w-6 h-6 rounded-full flex items-center justify-center text-sm">1</span>
@@ -255,7 +269,7 @@ const ConferenceCreate = () => {
                     </div>
                 </div>
 
-                {/* BR1: Mục tiêu & Chương trình */}
+                {/* Mục tiêu & Chương trình */}
                 <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
                     <h2 className="text-lg font-bold text-gray-900 mb-4 border-b pb-2 flex items-center gap-2">
                         <span className="bg-primary text-white w-6 h-6 rounded-full flex items-center justify-center text-sm">2</span>
@@ -284,7 +298,7 @@ const ConferenceCreate = () => {
                     </div>
                 </div>
 
-                {/* BR1: Danh sách diễn giả */}
+                {/* Danh sách diễn giả */}
                 <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
                     <div className="flex items-center justify-between mb-4 border-b pb-2">
                         <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2">
@@ -338,93 +352,7 @@ const ConferenceCreate = () => {
                     </div>
                 </div>
 
-                {/* BR3: Ban tổ chức */}
-                <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-                    <div className="flex items-center justify-between mb-4 border-b pb-2">
-                        <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2">
-                            <span className="bg-primary text-white w-6 h-6 rounded-full flex items-center justify-center text-sm">4</span>
-                            Ban tổ chức (BR3)
-                        </h2>
-                        <Button type="button" variant="secondary" size="sm" onClick={addTeamMember}>
-                            <Plus size={16} /> Thêm thành viên
-                        </Button>
-                    </div>
-                    <div className="space-y-3">
-                        {formData.organizingTeam.map((member, index) => (
-                            <div key={index} className="flex gap-4 items-start p-3 bg-blue-50 rounded-lg">
-                                <div className="flex-1">
-                                    <Input
-                                        placeholder="Họ và tên"
-                                        value={member.name}
-                                        onChange={(e) => handleTeamChange(index, 'name', e.target.value)}
-                                    />
-                                </div>
-                                <div className="flex-1">
-                                    <Input
-                                        placeholder="Vai trò (VD: Trưởng ban, Thư ký...)"
-                                        value={member.role}
-                                        onChange={(e) => handleTeamChange(index, 'role', e.target.value)}
-                                    />
-                                </div>
-                                {formData.organizingTeam.length > 1 && (
-                                    <button
-                                        type="button"
-                                        onClick={() => removeTeamMember(index)}
-                                        className="p-2 text-gray-400 hover:text-red-500 transition-colors mt-1"
-                                    >
-                                        <Trash2 size={20} />
-                                    </button>
-                                )}
-                            </div>
-                        ))}
-                    </div>
-                </div>
-
-                {/* BR1: File đính kèm */}
-                <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-                    <h2 className="text-lg font-bold text-gray-900 mb-4 border-b pb-2 flex items-center gap-2">
-                        <span className="bg-primary text-white w-6 h-6 rounded-full flex items-center justify-center text-sm">5</span>
-                        File đính kèm (Chương trình, Kế hoạch...)
-                    </h2>
-                    <div className="space-y-4">
-                        <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors">
-                            <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                                <Upload className="w-10 h-10 text-gray-400 mb-2" />
-                                <p className="text-sm text-gray-500">
-                                    <span className="font-semibold">Click để tải lên</span> hoặc kéo thả file vào đây
-                                </p>
-                                <p className="text-xs text-gray-400 mt-1">PDF, DOC, DOCX, XLS, XLSX (Max 10MB)</p>
-                            </div>
-                            <input type="file" className="hidden" multiple onChange={handleFileUpload} accept=".pdf,.doc,.docx,.xls,.xlsx" />
-                        </label>
-
-                        {formData.attachments.length > 0 && (
-                            <div className="space-y-2">
-                                <p className="text-sm font-medium text-gray-700">Đã tải lên ({formData.attachments.length} file):</p>
-                                {formData.attachments.map((file, index) => (
-                                    <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                                        <div className="flex items-center gap-3">
-                                            <FileText className="text-blue-600" size={20} />
-                                            <div>
-                                                <p className="text-sm font-medium text-gray-900">{file.name}</p>
-                                                <p className="text-xs text-gray-500">{file.size} • {file.uploadDate}</p>
-                                            </div>
-                                        </div>
-                                        <button
-                                            type="button"
-                                            onClick={() => removeAttachment(index)}
-                                            className="p-1 text-gray-400 hover:text-red-500 transition-colors"
-                                        >
-                                            <X size={18} />
-                                        </button>
-                                    </div>
-                                ))}
-                            </div>
-                        )}
-                    </div>
-                </div>
-
-                {/* UC01: Validation Notice */}
+                {/* Validation Notice */}
                 {Object.keys(errors).length > 0 && (
                     <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-start gap-3">
                         <AlertCircle className="text-red-600 flex-shrink-0 mt-0.5" size={20} />
@@ -439,49 +367,31 @@ const ConferenceCreate = () => {
                     </div>
                 )}
 
-                {/* UC01: Submit Actions */}
+                {/* Submit Actions */}
                 <div className="flex justify-end gap-4 pt-4 border-t">
-                    <Button type="button" variant="secondary" onClick={() => navigate('/conferences')}>
+                    <Button type="button" variant="secondary" onClick={() => navigate(`/conferences/${id}`)}>
                         Hủy bỏ
                     </Button>
                     <Button
-                        type="button"
-                        variant="secondary"
-                        onClick={(e) => handleSubmit(e, 'draft')}
-                        disabled={loading}
-                    >
-                        <Save size={18} /> Lưu nháp
-                    </Button>
-                    <Button
-                        type="button"
-                        onClick={(e) => handleSubmit(e, 'submit')}
-                        disabled={loading}
+                        type="submit"
+                        disabled={saving}
                         className="flex items-center gap-2"
                     >
-                        {loading && submitType === 'submit' ? (
+                        {saving ? (
                             <>
                                 <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
-                                Đang gửi...
+                                Đang lưu...
                             </>
                         ) : (
                             <>
-                                <Send size={18} /> Gửi duyệt
+                                <Save size={18} /> Lưu thay đổi
                             </>
                         )}
                     </Button>
                 </div>
             </form>
-
-            {/* UC01: Email notification after submit */}
-            {showEmailModal && (
-                <EmailNotification
-                    recipient="Lãnh đạo Nhà trường"
-                    subject={`Đề xuất hội thảo mới: ${formData.title}`}
-                    onClose={() => setShowEmailModal(false)}
-                />
-            )}
         </div>
     );
 };
 
-export default ConferenceCreate;
+export default ConferenceEdit;

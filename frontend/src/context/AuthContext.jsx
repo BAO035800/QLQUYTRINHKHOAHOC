@@ -103,6 +103,7 @@ export const AuthProvider = ({ children }) => {
     // Conference Permissions
     const canCreateConference = () => isAdmin() || isOrganizer() || isLecturer(); // Lecturers can propose
     const canManageConference = () => isAdmin() || isOrganizer();
+    const canEditConference = () => isAdmin() || isOrganizer() || isLecturer(); // Same as create
 
     // Finance Permissions
     const canViewFinance = () => isAdmin() || isAccountant() || isLeader();
@@ -127,6 +128,7 @@ export const AuthProvider = ({ children }) => {
             canGradeProject,
             canCreateConference,
             canManageConference,
+            canEditConference,
             canViewFinance,
             canViewReports
         }}>

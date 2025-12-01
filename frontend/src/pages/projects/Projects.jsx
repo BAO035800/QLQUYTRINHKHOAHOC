@@ -1,17 +1,23 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Plus, Search, Filter, RefreshCw, FolderOpen, Calendar, User, DollarSign, Trash2, Edit, CheckCircle } from 'lucide-react';
+import { Plus, Search, Filter, RefreshCw, FolderOpen, Calendar, User, DollarSign, Trash2, Edit, CheckCircle, Mail, MessageSquare, FileText } from 'lucide-react';
 import { projectService } from '../../services/projectService';
 import Button from '../../components/common/Button';
 import { useAuth } from '../../context/AuthContext';
+import EmailNotification from '../../components/common/EmailNotification';
+import SMSNotification from '../../components/common/SMSNotification';
+import PDFExport from '../../components/common/PDFExport';
 
 const Projects = () => {
     const navigate = useNavigate();
-    const { canCreateProject, canEditProject, canDeleteProject, canApproveProject } = useAuth();
+    const { canCreateProject, canEditProject, canDeleteProject, canApproveProject, user } = useAuth();
     const [projects, setProjects] = useState([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [filterStatus, setFilterStatus] = useState('all');
+    const [showEmailModal, setShowEmailModal] = useState(null);
+    const [showSMSModal, setShowSMSModal] = useState(null);
+    const [showPDFModal, setShowPDFModal] = useState(null);
 
     useEffect(() => {
         loadProjects();
@@ -45,6 +51,28 @@ const Projects = () => {
                 console.error("Failed to delete project:", error);
             }
         }
+    };
+
+    const handleApprove = (project) => {
+        // Show email notification when approving
+        setShowEmailModal({
+            recipient: project.leader,
+            subject: `Đề tài "${project.title}" đã được phê duyệt`
+        });
+        // Also show SMS notification
+        setTimeout(() => {
+            setShowSMSModal({
+                phoneNumber: '0912345678',
+                message: `Đề tài ${project.code} đã được phê duyệt. Vui lòng kiểm tra email để biết thêm chi tiết.`
+            });
+        }, 500);
+    };
+
+    const handleExportPDF = (project) => {
+        setShowPDFModal({
+            title: `De_tai_${project.code}`,
+            content: `Báo cáo chi tiết đề tài: ${project.title}`
+        });
     };
 
     const filteredProjects = projects.filter(project => {
@@ -162,10 +190,26 @@ const Projects = () => {
                                         )}
 
                                         {canApproveProject() && project.status === 'Chờ thẩm định' && (
-                                            <Button variant="secondary" size="sm" className="text-green-600 hover:bg-green-50" title="Duyệt">
+                                            <Button
+                                                variant="secondary"
+                                                size="sm"
+                                                className="text-green-600 hover:bg-green-50"
+                                                title="Duyệt"
+                                                onClick={() => handleApprove(project)}
+                                            >
                                                 <CheckCircle size={16} />
                                             </Button>
                                         )}
+
+                                        <Button
+                                            variant="secondary"
+                                            size="sm"
+                                            className="text-blue-600 hover:bg-blue-50"
+                                            onClick={() => handleExportPDF(project)}
+                                            title="Xuất PDF"
+                                        >
+                                            <FileText size={16} />
+                                        </Button>
 
                                         {canDeleteProject() && (
                                             <Button
@@ -183,6 +227,31 @@ const Projects = () => {
                         ))
                     )}
                 </div>
+            )}
+
+            {/* Notification Modals */}
+            {showEmailModal && (
+                <EmailNotification
+                    recipient={showEmailModal.recipient}
+                    subject={showEmailModal.subject}
+                    onClose={() => setShowEmailModal(null)}
+                />
+            )}
+
+            {showSMSModal && (
+                <SMSNotification
+                    phoneNumber={showSMSModal.phoneNumber}
+                    message={showSMSModal.message}
+                    onClose={() => setShowSMSModal(null)}
+                />
+            )}
+
+            {showPDFModal && (
+                <PDFExport
+                    title={showPDFModal.title}
+                    content={showPDFModal.content}
+                    onClose={() => setShowPDFModal(null)}
+                />
             )}
         </div>
     );

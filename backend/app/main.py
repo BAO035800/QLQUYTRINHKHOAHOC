@@ -11,18 +11,23 @@ from app.core.config import settings
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
-    openapi_url=f"{settings.API_V1_STR}/openapi.json"
+    openapi_url=f"{settings.API}/openapi.json"
 )
 
 # Set all CORS enabled origins
-if settings.BACKEND_CORS_ORIGINS:
-    app.add_middleware(
-        CORSMiddleware,
-        allow_origins=[str(origin) for origin in settings.BACKEND_CORS_ORIGINS],
-        allow_credentials=True,
-        allow_methods=["*"],
-        allow_headers=["*"],
-    )
+# Set all CORS enabled origins
+origins = [str(origin) for origin in settings.BACKEND_CORS_ORIGINS]
+# Add default development origins if not specified
+if not origins:
+    origins = ["http://localhost:5173", "http://localhost:3000"]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 @app.get("/")
 def root():
@@ -34,10 +39,11 @@ def health_check():
 
 # Import and include routers here
 from app.api.v1.api import api_router
-app.include_router(api_router, prefix=settings.API_V1_STR)
+app.include_router(api_router, prefix=settings.API)
 
 if __name__ == "__main__":
     import uvicorn
     # Use the port from settings, fallback to 8000
     port = getattr(settings, "BACKEND_PORT", 8000)
-    uvicorn.run("app.main:app", host="local", port=port, reload=True)
+    host = getattr(settings, "BACKEND_HOST", "127.0.0.1")
+    uvicorn.run("app.main:app", host=host, port=port, reload=True)

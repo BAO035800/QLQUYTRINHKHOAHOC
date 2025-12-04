@@ -5,7 +5,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 class Settings(BaseSettings):
     PROJECT_NAME: str = "QuanLyKhoaHoc API"
-    API_V1_STR: str = "/api/v1"
+    API: str = "/api"
     
     # Supabase
     SUPABASE_URL: str
@@ -21,8 +21,10 @@ class Settings(BaseSettings):
     REFRESH_TOKEN_EXPIRE_DAYS: int = 7
 
     # Ports
+    BACKEND_HOST: str = "127.0.0.1"
     BACKEND_PORT: int = 8000
     FRONTEND_PORT: int = 5173
+    FRONTEND_URL: str = "http://localhost:5173"
 
     # CORS
     BACKEND_CORS_ORIGINS: List[AnyHttpUrl] = []

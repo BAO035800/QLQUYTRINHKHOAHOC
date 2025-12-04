@@ -1,12 +1,4 @@
 -- #############################################################
--- LƯU Ý QUAN TRỌNG:
--- 1. Bảng nguoi_dung đã bị loại bỏ.
--- 2. Tất cả các cột tham chiếu người dùng (user_id, id_nguoitao, v.v.)
---    đã được đổi sang kiểu UUID và trỏ đến auth.users(id).
--- #############################################################
--- 1. BẢNG PHÂN QUYỀN (ROLES & PERMISSIONS)
--- Bảng Vai trò (Roles)
--- #############################################################
 -- 1. BẢNG PHÂN QUYỀN (ROLES & PERMISSIONS)
 -- #############################################################
 -- Bảng Vai trò (Roles)
@@ -36,27 +28,30 @@ CREATE TABLE role_permissions (
 -- #############################################################
 -- 2. BẢNG THỰC THỂ CƠ SỞ (CORE ENTITIES)
 -- #############################################################
+-- CHUẨN HÓA: creat_at -> created_at, upadte_at -> updated_at
 CREATE TABLE nckh_linh_vuc (
     id BIGSERIAL PRIMARY KEY,
     ten_linh_vuc TEXT,
     mo_ta_linh_vuc TEXT,
-    creat_at TIMESTAMP,
-    upadte_at TIMESTAMP
+    created_at TIMESTAMP,
+    updated_at TIMESTAMP
 );
+-- CHUẨN HÓA: creat_at -> created_at, upadte_at -> updated_at
 CREATE TABLE nckh_chuyen_mon (
     id BIGSERIAL PRIMARY KEY,
     ten_chuyen_mon TEXT,
     mo_ta TEXT,
-    creat_at TIMESTAMP,
-    upadte_at TIMESTAMP,
+    created_at TIMESTAMP,
+    updated_at TIMESTAMP,
     deleted_at TIMESTAMP
 );
+-- CHUẨN HÓA: creat_at -> created_at, upadte_at -> updated_at
 CREATE TABLE nckh_chu_de (
     id BIGSERIAL PRIMARY KEY,
     ten_chu_de TEXT,
     mo_ta TEXT,
-    creat_at TIMESTAMP,
-    upadte_at TIMESTAMP,
+    created_at TIMESTAMP,
+    updated_at TIMESTAMP,
     deleted_at TIMESTAMP
 );
 -- Bảng Sinh viên (user_id là UUID)
@@ -66,7 +61,8 @@ CREATE TABLE Sinh_vien (
     user_id UUID REFERENCES auth.users(id),
     UNIQUE (user_id)
 );
--- Bảng Nhà khoa học (NVKH) (user_id là UUID)
+-- Bảng Nhà khoa học (NVKH) (CHỦ YẾU SỬ DỤNG TRONG CÁC LỆNH UPDATE CỦA ADMIN)
+-- CHUẨN HÓA: creat_at -> created_at, upadte_at -> updated_at
 CREATE TABLE nckh_nha_khoa_hoc (
     id BIGSERIAL PRIMARY KEY,
     user_id UUID REFERENCES auth.users(id) UNIQUE,
@@ -77,19 +73,20 @@ CREATE TABLE nckh_nha_khoa_hoc (
     linh_vuc_id BIGINT REFERENCES nckh_linh_vuc(id),
     chuyen_gia BOOLEAN,
     chuyen_mon_id BIGINT REFERENCES nckh_chuyen_mon(id),
-    creat_at TIMESTAMP,
-    upadte_at TIMESTAMP,
+    created_at TIMESTAMP,
+    updated_at TIMESTAMP,
     deleted_at TIMESTAMP,
     status INT
 );
+-- CHUẨN HÓA: creat_at -> created_at, upadte_at -> updated_at
 CREATE TABLE nckh_thongbao_dexuat (
     id BIGSERIAL PRIMARY KEY,
     ten VARCHAR(255),
     noi_dung TEXT,
     ngaybatdau DATE,
     ngayketthuc DATE,
-    creat_at TIMESTAMP,
-    upadte_at TIMESTAMP
+    created_at TIMESTAMP,
+    updated_at TIMESTAMP
 );
 CREATE TABLE nckh_thongbao_file (
     id SERIAL PRIMARY KEY,
@@ -98,7 +95,8 @@ CREATE TABLE nckh_thongbao_file (
     duong_dang TEXT
 );
 -- 3. BẢNG DỰ ÁN & HỘI ĐỒNG (PROJECTS & COUNCILS)
--- Bảng Dự án (Du_an) (id_nguoitao là UUID)
+-- Bảng Dự án (Du_an) (CHỦ YẾU LÀ UPDATE TRẠNG THÁI)
+-- CHUẨN HÓA: creat_at -> created_at, upadte_at -> updated_at
 CREATE TABLE nckh_du_an (
     id BIGSERIAL PRIMARY KEY,
     ma TEXT,
@@ -116,8 +114,8 @@ CREATE TABLE nckh_du_an (
     kinh_phi TEXT,
     kinh_phi_duyet TEXT,
     url_thuyet_minh TEXT,
-    creat_at TIMESTAMP,
-    upadte_at TIMESTAMP
+    created_at TIMESTAMP,
+    updated_at TIMESTAMP
 );
 -- Bảng Lịch sử Trạng thái (nguoi_thuc_hien_id là UUID)
 CREATE TABLE nckh_duan_lichsu_trangthai (
@@ -136,27 +134,28 @@ CREATE TABLE nckh_duan_file (
     user_id_nguoi_tao UUID REFERENCES auth.users(id),
     url TEXT
 );
--- Bảng Thành viên Dự án (SỬA: id_thanh_vien phải là UUID để trỏ đến người dùng)
+-- Bảng Thành viên Dự án (id_thanh_vien là UUID)
 CREATE TABLE nckh_du_an_thanh_vien (
     id BIGSERIAL PRIMARY KEY,
     du_an_id BIGINT REFERENCES nckh_du_an(id),
     id_thanh_vien UUID REFERENCES auth.users(id),
-    -- Sửa BIGINT thành UUID
     role_thanh_vien VARCHAR(50),
     vai_tro INT,
     ngay_tham_gia TIMESTAMP,
     ngay_roi_di TIMESTAMP
 );
+-- CHUẨN HÓA: creat_at -> created_at, upadte_at -> updated_at
 CREATE TABLE nckh_hoi_dong_danh_gia (
     id BIGSERIAL PRIMARY KEY,
     ma VARCHAR(50),
     ten_hoi_dong TEXT,
     loai_hoi_dong VARCHAR(50),
     url_quyet_dinh TEXT,
-    creat_at TIMESTAMP,
-    upadte_at TIMESTAMP,
+    created_at TIMESTAMP,
+    updated_at TIMESTAMP,
     deleted_at TIMESTAMP
 );
+-- CHUẨN HÓA: creat_at -> created_at, upadte_at -> updated_at
 CREATE TABLE nckh_hoi_dong_thanh_vien (
     id BIGSERIAL PRIMARY KEY,
     nhakhoahoc_id BIGINT REFERENCES nckh_nha_khoa_hoc(id),
@@ -166,8 +165,8 @@ CREATE TABLE nckh_hoi_dong_thanh_vien (
     diem INT,
     ghi_chu TEXT,
     url_bien_ban TEXT,
-    creat_at TIMESTAMP,
-    upadte_at TIMESTAMP
+    created_at TIMESTAMP,
+    updated_at TIMESTAMP
 );
 CREATE TABLE nckh_hoidong_duan (
     id SERIAL PRIMARY KEY,
@@ -176,6 +175,7 @@ CREATE TABLE nckh_hoidong_duan (
     UNIQUE (hoidong_id, duan_id)
 );
 -- 4. BẢNG BÀI BÁO (PAPERS)
+-- CHUẨN HÓA: satatus -> status, creat_at -> created_at, upadte_at -> updated_at
 CREATE TABLE nckh_bai_bao (
     id BIGSERIAL PRIMARY KEY,
     du_an_id BIGINT REFERENCES nckh_du_an(id),
@@ -193,11 +193,11 @@ CREATE TABLE nckh_bai_bao (
     ten_hoi_thao VARCHAR(255),
     diaiem_hoithao VARCHAR(255),
     ngay_hoi_thao DATE,
-    creat_at TIMESTAMP,
-    upadte_at TIMESTAMP,
-    satatus INT
+    created_at TIMESTAMP,
+    updated_at TIMESTAMP,
+    status INT -- Đã sửa satatus
 );
--- Bảng Thành viên Bài báo (user_id là UUID)
+-- CHUẨN HÓA: creat_at -> created_at, upadte_at -> updated_at
 CREATE TABLE nckh_baibao_thanhvien (
     id BIGSERIAL PRIMARY KEY,
     bai_bao_id INT REFERENCES nckh_bai_bao(id),

@@ -4,6 +4,12 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { DataProvider } from './context/DataContext';
 import Login from './pages/Login';
+import Register from './pages/Register';
+import RegisterSuccess from './pages/RegisterSuccess';
+import ForgotPassword from './pages/ForgotPassword';
+import ResetPassword from './pages/ResetPassword';
+import VerificationSuccess from './pages/VerificationSuccess';
+
 import Dashboard from './pages/Dashboard';
 import ProposalsPage from './pages/ProposalsPage';
 import ProposalForm from './pages/ProposalForm';
@@ -28,6 +34,13 @@ function App() {
         <Router>
           <Routes>
             <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
+            <Route path="/register-success" element={<RegisterSuccess />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
+            <Route path="/verification-success" element={<VerificationSuccess />} />
+            {/* Handle hash routing from Supabase */}
+            <Route path="/#access_token*" element={<VerificationSuccess />} />
 
             <Route path="/" element={
               <ProtectedRoute>
@@ -54,6 +67,7 @@ function App() {
 
               {/* Other Routes */}
               <Route path="profile" element={<ProfilePage />} />
+
               <Route path="users" element={<div className="card"><h2>Quản lý Người dùng (Đang phát triển)</h2></div>} />
               <Route path="settings" element={<div className="card"><h2>Cấu hình hệ thống (Đang phát triển)</h2></div>} />
             </Route>

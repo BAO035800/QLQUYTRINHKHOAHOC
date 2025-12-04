@@ -1,35 +1,22 @@
+
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
-import MainLayout from './layouts/MainLayout';
-import Login from './pages/auth/Login';
-import Dashboard from './pages/dashboard/Dashboard';
-import Users from './pages/users/Users';
-import Projects from './pages/projects/Projects';
-import Conferences from './pages/conferences/Conferences';
-import Publications from './pages/publications/Publications';
-import Reports from './pages/reports/Reports';
-import Documents from './pages/documents/Documents';
-import Profile from './pages/users/Profile';
-import ProjectCreate from './pages/projects/ProjectCreate';
-import ProjectDetail from './pages/projects/ProjectDetail';
-import ConferenceCreate from './pages/conferences/ConferenceCreate';
-import ConferenceEdit from './pages/conferences/ConferenceEdit';
-import ConferenceDetail from './pages/conferences/ConferenceDetail';
-import PublicationCreate from './pages/publications/PublicationCreate';
-import PublicationDetail from './pages/publications/PublicationDetail';
+import { DataProvider } from './context/DataContext';
+import Login from './pages/Login';
+import Dashboard from './pages/Dashboard';
+import ProposalsPage from './pages/ProposalsPage';
+import ProposalForm from './pages/ProposalForm';
+import ProposalDetail from './pages/ProposalDetail';
+import ProfilePage from './pages/ProfilePage';
+import CouncilPage from './pages/CouncilPage';
+import Layout from './components/Layout';
 
 const ProtectedRoute = ({ children }) => {
-  const { isAuthenticated, loading } = useAuth();
-  const location = useLocation();
+  const { user, loading } = useAuth();
 
-  if (loading) {
-    return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
-  }
-
-  if (!isAuthenticated) {
-    return <Navigate to="/login" state={{ from: location }} replace />;
-  }
+  if (loading) return <div>Loading...</div>;
+  if (!user) return <Navigate to="/login" />;
 
   return children;
 };
@@ -37,35 +24,42 @@ const ProtectedRoute = ({ children }) => {
 function App() {
   return (
     <AuthProvider>
-      <Router>
-        <Routes>
-          <Route path="/login" element={<Login />} />
+      <DataProvider>
+        <Router>
+          <Routes>
+            <Route path="/login" element={<Login />} />
 
-          <Route path="/" element={
-            <ProtectedRoute>
-              <MainLayout />
-            </ProtectedRoute>
-          }>
-            <Route index element={<Dashboard />} />
-            <Route path="users" element={<Users />} />
-            <Route path="profile" element={<Profile />} />
-            <Route path="projects" element={<Projects />} />
-            <Route path="projects/create" element={<ProjectCreate />} />
-            <Route path="projects/:id" element={<ProjectDetail />} />
-            <Route path="conferences" element={<Conferences />} />
-            <Route path="conferences/create" element={<ConferenceCreate />} />
-            <Route path="conferences/:id/edit" element={<ConferenceEdit />} />
-            <Route path="conferences/:id" element={<ConferenceDetail />} />
-            <Route path="publications" element={<Publications />} />
-            <Route path="publications/create" element={<PublicationCreate />} />
-            <Route path="publications/:id" element={<PublicationDetail />} />
-            <Route path="reports" element={<Reports />} />
-            <Route path="documents" element={<Documents />} />
-          </Route>
+            <Route path="/" element={
+              <ProtectedRoute>
+                <Layout />
+              </ProtectedRoute>
+            }>
+              <Route index element={<Dashboard />} />
 
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
-      </Router>
+              {/* Proposal Routes */}
+              <Route path="proposals" element={<ProposalsPage />} />
+              <Route path="proposals/new" element={<ProposalForm />} />
+              <Route path="proposals/edit/:id" element={<ProposalForm />} />
+              <Route path="proposals/:id" element={<ProposalDetail />} />
+
+              <Route path="projects" element={<div className="card"><h2>Đề tài đang thực hiện (Đang phát triển)</h2></div>} />
+
+              {/* Manager Routes */}
+              <Route path="manage-proposals" element={<ProposalsPage />} />
+              <Route path="manage-projects" element={<div className="card"><h2>Quản lý Đề tài (Đang phát triển)</h2></div>} />
+              <Route path="councils" element={<CouncilPage />} />
+
+              {/* Expert Routes */}
+              <Route path="reviews" element={<ProposalsPage />} /> {/* Expert reuses list to see assigned proposals */}
+
+              {/* Other Routes */}
+              <Route path="profile" element={<ProfilePage />} />
+              <Route path="users" element={<div className="card"><h2>Quản lý Người dùng (Đang phát triển)</h2></div>} />
+              <Route path="settings" element={<div className="card"><h2>Cấu hình hệ thống (Đang phát triển)</h2></div>} />
+            </Route>
+          </Routes>
+        </Router>
+      </DataProvider>
     </AuthProvider>
   );
 }
